@@ -196,8 +196,10 @@ public class FourColorPicker extends RelativeLayout {
         paint.setStyle(Paint.STROKE);
         // TooltipRenderer: rad = 3f, width = 4/3f
         paint.setStrokeWidth(mBorderRadius * mThicknessFactor);
-        canvas.drawRoundRectGradient(mPreviewBox.left, mPreviewBox.top, mPreviewBox.right, mPreviewBox.bottom,
-                mULColor, mURColor, mLRColor, mLLColor, mBorderRadius, paint);
+        /*canvas.drawRoundRectGradient(mPreviewBox.left, mPreviewBox.top, mPreviewBox.right, mPreviewBox.bottom,
+                mULColor, mURColor, mLRColor, mLLColor, mBorderRadius, paint);*/
+        canvas.drawRoundRect(mPreviewBox.left, mPreviewBox.top, mPreviewBox.right, mPreviewBox.bottom,
+                mBorderRadius, paint);
         paint.recycle();
     }
 
