@@ -508,7 +508,7 @@ public final class Config {
             reload();
         }
 
-        private void reload() {
+        public void reload() {
             BlurHandler.sBlurEffect = mBlurEffect.get();
             //BlurHandler.sBlurWithBackground = mBlurWithBackground.get();
             BlurHandler.sOverrideVanillaBlur = mOverrideVanillaBlur.get();
