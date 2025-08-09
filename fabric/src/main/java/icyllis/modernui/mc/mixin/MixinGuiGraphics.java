@@ -23,6 +23,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.*;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.*;
@@ -31,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 @Mixin(GuiGraphics.class)
@@ -48,7 +50,7 @@ public abstract class MixinGuiGraphics implements IModernGuiGraphics {
 
     @Shadow
     protected abstract void renderTooltipInternal(Font arg, List<ClientTooltipComponent> list, int m, int n,
-                                                  ClientTooltipPositioner arg2);
+                                                  ClientTooltipPositioner arg2, @Nullable ResourceLocation arg3);
 
     @Inject(method = "renderTooltip(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
             at = @At("HEAD"))
@@ -62,17 +64,18 @@ public abstract class MixinGuiGraphics implements IModernGuiGraphics {
         modernUI_MC$tooltipStack = ItemStack.EMPTY;
     }
 
-    @Inject(method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;II)V",
-            at = @At(value = "INVOKE", target = "Ljava/util/List;stream()Ljava/util/stream/Stream;"), cancellable = true)
+    @Inject(method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;" +
+            "IILnet/minecraft/resources/ResourceLocation;)V",
+            at = @At("HEAD"), cancellable = true)
     private void onRenderTooltip(Font font, List<Component> components, Optional<TooltipComponent> tooltipComponent,
-                                 int x, int y, CallbackInfo ci) {
+                                 int x, int y, @Nullable ResourceLocation tooltipStyle, CallbackInfo ci) {
         if (TooltipRenderer.sTooltip && TooltipRenderer.sLineWrapping_FabricOnly) {
             if (!components.isEmpty()) {
                 var transformedComponents = modernUI_MC$transformComponents(
                         font, components, tooltipComponent, x
                 );
                 renderTooltipInternal(font, transformedComponents,
-                        x, y, DefaultTooltipPositioner.INSTANCE);
+                        x, y, DefaultTooltipPositioner.INSTANCE, tooltipStyle);
                 ci.cancel();
             }
         }
@@ -124,13 +127,14 @@ public abstract class MixinGuiGraphics implements IModernGuiGraphics {
     @Inject(method = "renderTooltipInternal", at = @At("HEAD"), cancellable = true)
     private void onRenderTooltip(Font font, List<ClientTooltipComponent> components,
                                  int x, int y, ClientTooltipPositioner positioner,
+                                 @Nullable ResourceLocation tooltipStyle,
                                  CallbackInfo ci) {
         if (TooltipRenderer.sTooltip) {
             if (!components.isEmpty()) {
                 UIManager.getInstance().drawExtTooltip(modernUI_MC$tooltipStack,
                         (GuiGraphics) (Object) this,
                         components, x, y, font,
-                        guiWidth(), guiHeight(), positioner);
+                        guiWidth(), guiHeight(), positioner, tooltipStyle);
                 ci.cancel();
             }
         }

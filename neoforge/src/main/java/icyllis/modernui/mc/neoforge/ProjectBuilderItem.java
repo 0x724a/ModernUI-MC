@@ -18,26 +18,13 @@
 
 package icyllis.modernui.mc.neoforge;
 
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 import javax.annotation.Nonnull;
-import java.util.function.Consumer;
 
 final class ProjectBuilderItem extends Item {
 
     ProjectBuilderItem(@Nonnull Properties props) {
         super(props);
-    }
-
-    @Override
-    public void initializeClient(@Nonnull Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return new ProjectBuilderRenderer();
-            }
-        });
     }
 }

@@ -19,25 +19,22 @@
 package icyllis.modernui.mc.forge;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import icyllis.modernui.ModernUI;
 import icyllis.modernui.annotation.MainThread;
 import icyllis.modernui.annotation.RenderThread;
 import icyllis.modernui.core.Core;
 import icyllis.modernui.fragment.Fragment;
 import icyllis.modernui.mc.*;
+import icyllis.modernui.mc.mixin.AccessGameRenderer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -53,7 +50,6 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
@@ -65,7 +61,7 @@ import java.util.function.Consumer;
 public final class MuiForgeApi extends MuiModApi {
 
     public MuiForgeApi() {
-        ModernUI.LOGGER.info(ModernUI.MARKER, "Created MuiForgeAPI");
+        ModernUIMod.LOGGER.info(ModernUIMod.MARKER, "Created MuiForgeAPI");
     }
 
     /**
@@ -158,26 +154,27 @@ public final class MuiForgeApi extends MuiModApi {
         try {
             String version = net.minecraftforge.fml.loading.ImmediateWindowHandler.getGLVersion();
             if (!"3.2".equals(version)) {
-                ModernUI.LOGGER.info(ModernUI.MARKER, "Detected OpenGL {} Core Profile from FML Early Window",
+                ModernUIMod.LOGGER.info(ModernUIMod.MARKER, "Detected OpenGL {} Core Profile from FML Early Window",
                         version);
                 return true;
             }
-        } catch (Exception ignored) {
+        } catch (Throwable ignored) {
         }
         return false;
     }
 
     @Override
     public void loadEffect(GameRenderer gr, ResourceLocation effect) {
-        gr.loadEffect(effect);
+        // this method is no longer public in Forge patches...
+        ((AccessGameRenderer) gr).invokeSetPostEffect(effect);
     }
 
-    @Override
+    /*@Override
     public ShaderInstance makeShaderInstance(ResourceProvider resourceProvider,
                                              ResourceLocation resourceLocation,
                                              VertexFormat vertexFormat) throws IOException {
         return new ShaderInstance(resourceProvider, resourceLocation, vertexFormat);
-    }
+    }*/
 
     @Override
     public boolean isKeyBindingMatches(KeyMapping keyMapping, InputConstants.Key key) {
@@ -259,7 +256,7 @@ public final class MuiForgeApi extends MuiModApi {
     public static void openMenu(@Nonnull Player player, @Nonnull MenuProvider provider,
                                 @Nullable Consumer<FriendlyByteBuf> writer) {
         if (!(player instanceof ServerPlayer p)) {
-            ModernUI.LOGGER.warn(ModernUI.MARKER, "openMenu() is not called from logical server",
+            ModernUIMod.LOGGER.warn("openMenu() is not called from logical server",
                     new Exception().fillInStackTrace());
             return;
         }
@@ -271,7 +268,7 @@ public final class MuiForgeApi extends MuiModApi {
     static void openMenu0(@Nonnull Player player, @Nonnull MenuConstructor provider,
                           @Nullable Consumer<FriendlyByteBuf> writer) {
         if (!(player instanceof ServerPlayer p)) {
-            ModernUI.LOGGER.warn(ModernUI.MARKER, "openMenu() is not called from logical server",
+            ModernUIMod.LOGGER.warn("openMenu() is not called from logical server",
                     new Exception().fillInStackTrace());
             return;
         }

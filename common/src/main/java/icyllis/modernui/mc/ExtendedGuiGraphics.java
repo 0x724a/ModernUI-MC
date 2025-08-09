@@ -20,9 +20,10 @@ package icyllis.modernui.mc;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import icyllis.modernui.mc.mixin.AccessGuiGraphics;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.ShaderInstance;
 import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
@@ -58,7 +59,7 @@ public class ExtendedGuiGraphics {
 
     public ExtendedGuiGraphics(@Nonnull GuiGraphics guiGraphics) {
         this.guiGraphics = guiGraphics;
-        this.bufferSource = guiGraphics.bufferSource();
+        this.bufferSource = ((AccessGuiGraphics) guiGraphics).getBufferSource();
     }
 
     /**
@@ -280,7 +281,7 @@ public class ExtendedGuiGraphics {
         if (!Float.isFinite(radius) || radius < 0.0f) { // NaN, Inf, negative
             radius = 0;
         }
-        ShaderInstance shader = GuiRenderType.getShaderRoundRect();
+        CompiledShaderProgram shader = RenderSystem.setShader(GuiRenderType.SHADER_ROUND_RECT);
         if (shader == null) {
             return;
         }
@@ -312,7 +313,6 @@ public class ExtendedGuiGraphics {
             // we expect local coordinates, concat pose with model view
             RenderSystem.getModelViewStack().pushMatrix();
             RenderSystem.getModelViewStack().mul(pose);
-            RenderSystem.applyModelViewMatrix();
             shader.safeGetUniform("u_Rect")
                     .set(centerX, centerY, extentX, extentY);
             shader.safeGetUniform("u_Radii")
@@ -326,7 +326,6 @@ public class ExtendedGuiGraphics {
             // we modify uniform for each draw, so cannot do batch rendering
             guiGraphics.flush();
             RenderSystem.getModelViewStack().popMatrix();
-            RenderSystem.applyModelViewMatrix();
         }
     }
 }

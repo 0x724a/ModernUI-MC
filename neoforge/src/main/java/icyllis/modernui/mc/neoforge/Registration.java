@@ -36,6 +36,7 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.MenuType;
@@ -87,6 +88,7 @@ final class Registration {
 
     static void registerItems(@Nonnull RegisterEvent.RegisterHelper<Item> helper) {
         Item.Properties properties = new Item.Properties().stacksTo(1);
+        properties.setId(ResourceKey.create(Registries.ITEM, MuiRegistries.PROJECT_BUILDER_ITEM_KEY));
         helper.register(MuiRegistries.PROJECT_BUILDER_ITEM_KEY, new ProjectBuilderItem(properties));
     }
 
@@ -164,7 +166,7 @@ final class Registration {
         @SubscribeEvent
         static void loadingClient(RegisterParticleProvidersEvent event) {
             // this event fired after LOAD_REGISTRIES and before COMMON_SETUP on client main thread (render thread)
-            // this event fired before RegisterClientReloadListenersEvent
+            // this event fired before AddClientReloadListenersEvent
             UIManagerForge.initialize();
         }
 
@@ -400,30 +402,34 @@ final class Registration {
             }
         }
 
-        @SubscribeEvent
+        // tooltip is not a required shader, let it lazy init
+        /*@SubscribeEvent
         static void onRegisterShaders(@Nonnull RegisterShadersEvent event) {
             try {
                 event.registerShader(
                         new ShaderInstance(event.getResourceProvider(),
                                 ModernUIMod.location("rendertype_modern_tooltip"),
                                 DefaultVertexFormat.POSITION),
-                        GuiRenderType::setShaderTooltip);
+                        TooltipRenderType::setShaderTooltip);
             } catch (IOException e) {
                 LOGGER.error(MARKER, "Bad tooltip shader", e);
             }
-            try {
-                event.registerShader(
-                        new ShaderInstance(event.getResourceProvider(),
-                                ModernUIMod.location("rendertype_round_rect"),
-                                DefaultVertexFormat.POSITION_COLOR),
-                        GuiRenderType::setShaderRoundRect);
-            } catch (IOException e) {
-                LOGGER.error(MARKER, "Bad round rect shader", e);
+        }*/
+
+        /*@SubscribeEvent
+        static void onRegisterClientExtensions(@Nonnull RegisterClientExtensionsEvent event) {
+            if (ModernUIMod.sDevelopment) {
+                event.registerItem(new IClientItemExtensions() {
+                    @Override
+                    public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                        return new ProjectBuilderRenderer();
+                    }
+                }, MuiRegistries.PROJECT_BUILDER_ITEM);
             }
-        }
+        }*/
     }
 
-    static class ModClientDev {
+    /*static class ModClientDev {
 
         static {
             assert (FMLEnvironment.dist.isClient());
@@ -450,5 +456,5 @@ final class Registration {
                                          @Nonnull Function<BakedModel, BakedModel> replacer) {
             modelRegistry.put(location, replacer.apply(modelRegistry.get(location)));
         }
-    }
+    }*/
 }

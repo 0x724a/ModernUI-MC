@@ -1,6 +1,6 @@
 /*
  * Modern UI.
- * Copyright (C) 2019-2024 BloCamLimb. All rights reserved.
+ * Copyright (C) 2019-2025 BloCamLimb. All rights reserved.
  *
  * Modern UI is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@ package icyllis.modernui.mc.forge;
 
 import icyllis.modernui.ModernUI;
 import icyllis.modernui.mc.*;
+import icyllis.modernui.mc.ui.CenterFragment2;
 import icyllis.modernui.util.DataSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.LanguageManager;
@@ -60,7 +61,7 @@ public final class ModernUIForge extends ModernUIMod {
     private static final Map<String, IEventBus> sModEventBuses = new HashMap<>();
 
     // mod-loading thread
-    public ModernUIForge() {
+    public ModernUIForge(FMLJavaModLoadingContext context) {
         if (!FMLEnvironment.production) {
             ModernUIMod.sDevelopment = true;
             LOGGER.debug(MARKER, "Auto detected in FML development environment");
@@ -83,16 +84,13 @@ public final class ModernUIForge extends ModernUIMod {
         sLegendaryTooltipsLoaded = ModList.get().isLoaded("legendarytooltips");
         sUntranslatedItemsLoaded = ModList.get().isLoaded("untranslateditems");
 
-        Config.initCommonConfig(
-                spec -> ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, spec,
-                        ModernUI.NAME_CPT + "/common.toml")
+        context.registerConfig(ModConfig.Type.COMMON, ConfigImpl.COMMON_SPEC,
+                ModernUI.NAME_CPT + "/common.toml");
+        context.getModEventBus().addListener(
+                (Consumer<ModConfigEvent>) event -> ConfigImpl.reloadCommon(event.getConfig())
         );
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(
-                (Consumer<ModConfigEvent>) event -> Config.reloadCommon(event.getConfig())
-        );
-        LocalStorage.init();
 
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> Loader::init);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> Loader.init(context));
 
         /*if ((getBootstrapLevel() & BOOTSTRAP_ENABLE_DEBUG_INJECTORS) != 0) {
             MinecraftForge.EVENT_BUS.register(EventHandler.ClientDebug.class);
@@ -134,8 +132,8 @@ public final class ModernUIForge extends ModernUIMod {
     private static class Loader {
 
         @SuppressWarnings("resource")
-        public static void init() {
-            new Client();
+        public static void init(FMLJavaModLoadingContext context) {
+            new Client(context);
         }
     }
 
@@ -146,25 +144,21 @@ public final class ModernUIForge extends ModernUIMod {
             assert FMLEnvironment.dist.isClient();
         }
 
-        private Client() {
+        private Client(FMLJavaModLoadingContext context) {
             super();
-            Config.initClientConfig(
-                    spec -> ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, spec,
-                            ModernUI.NAME_CPT + "/client.toml")
-            );
-            Config.initTextConfig(
-                    spec -> ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, spec,
-                            ModernUI.NAME_CPT + "/text.toml")
-            );
+            context.registerConfig(ModConfig.Type.CLIENT, ConfigImpl.CLIENT_SPEC,
+                    ModernUI.NAME_CPT + "/client.toml");
+            context.registerConfig(ModConfig.Type.CLIENT, ConfigImpl.TEXT_SPEC,
+                    ModernUI.NAME_CPT + "/text.toml");
             FontResourceManager.getInstance();
             if (ModernUIMod.isTextEngineEnabled()) {
-                ModernUIText.init();
+                ModernUIText.init(context);
                 LOGGER.info(MARKER, "Initialized Modern UI text engine");
             }
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(
-                    (Consumer<ModConfigEvent>) event -> Config.reloadAnyClient(event.getConfig())
+            context.getModEventBus().addListener(
+                    (Consumer<ModConfigEvent>) event -> ConfigImpl.reloadAnyClient(event.getConfig())
             );
-            ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+            context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
                     () -> new ConfigScreenHandler.ConfigScreenFactory(
                             (mc, modsScreen) -> {
                                 var args = new DataSet();
@@ -174,9 +168,9 @@ public final class ModernUIForge extends ModernUIMod {
                                 return MuiForgeApi.get().createScreen(fragment, null, modsScreen);
                             }
                     ));
-            if (ModernUIMod.sDevelopment) {
-                FMLJavaModLoadingContext.get().getModEventBus().register(Registration.ModClientDev.class);
-            }
+            /*if (ModernUIMod.sDevelopment) {
+                context.getModEventBus().register(Registration.ModClientDev.class);
+            }*/
             LOGGER.info(MARKER, "Initialized Modern UI client");
         }
 

@@ -18,6 +18,7 @@
 
 package icyllis.modernui.mc.text.mixin;
 
+import icyllis.modernui.mc.mixin.AccessGuiGraphics;
 import icyllis.modernui.mc.text.ModernTextRenderer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
@@ -45,20 +46,16 @@ public abstract class MixinIngameGui {
         if ((color & 0xFFFFFF) != 0) {
             float offset = ModernTextRenderer.sOutlineOffset;
             Matrix4f pose = gr.pose().last().pose();
-            // end batch for each draw to prevent transparency sorting
-            MultiBufferSource.BufferSource source = gr.bufferSource();
+            MultiBufferSource.BufferSource source = ((AccessGuiGraphics) gr).getBufferSource();
             font.drawInBatch(text, x + offset, y, 0xFF000000, dropShadow,
                     pose, source, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-            source.endBatch();
             font.drawInBatch(text, x - offset, y, 0xFF000000, dropShadow,
                     pose, source, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-            source.endBatch();
             font.drawInBatch(text, x, y + offset, 0xFF000000, dropShadow,
                     pose, source, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-            source.endBatch();
             font.drawInBatch(text, x, y - offset, 0xFF000000, dropShadow,
                     pose, source, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
-            source.endBatch();
+            gr.flush();
             font.drawInBatch(text, x, y, 0xFF000000 | color, dropShadow,
                     pose, source, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
             gr.flush();

@@ -31,7 +31,7 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import javax.annotation.Nonnull;
 
-import static icyllis.modernui.ModernUI.*;
+import static icyllis.modernui.mc.ModernUIMod.*;
 
 /**
  * Modern UI Text for Minecraft can bootstrap independently.
@@ -45,8 +45,8 @@ public final class ModernUIText {
     private ModernUIText() {
     }
 
-    public static void init() {
-        FMLJavaModLoadingContext.get().getModEventBus().register(ModernUIText.class);
+    public static void init(FMLJavaModLoadingContext context) {
+        context.getModEventBus().register(ModernUIText.class);
     }
 
     /*@SubscribeEvent

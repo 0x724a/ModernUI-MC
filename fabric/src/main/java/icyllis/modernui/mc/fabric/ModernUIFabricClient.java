@@ -18,7 +18,6 @@
 
 package icyllis.modernui.mc.fabric;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
@@ -36,14 +35,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.fabric.api.resource.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.resources.language.LanguageManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -51,18 +48,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.fml.config.ModConfig;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.IntStream;
 
-import static icyllis.modernui.mc.ModernUIMod.*;
+import static icyllis.modernui.mc.ModernUIMod.LOGGER;
+import static icyllis.modernui.mc.ModernUIMod.MARKER;
 
 @Environment(EnvType.CLIENT)
 public class ModernUIFabricClient extends ModernUIClient implements ClientModInitializer {
@@ -108,40 +104,32 @@ public class ModernUIFabricClient extends ModernUIClient implements ClientModIni
                 // FML may throw ex, so it can be null
                 if (handler != null) {
                     // Call in lambda, not in creating the lambda
-                    handler.post(() -> UIManager.getInstance().updateLayoutDir(Config.CLIENT.mForceRtl.get()));
+                    handler.post(() -> UIManager.getInstance().updateLayoutDir(ConfigImpl.CLIENT.mForceRtl.get()));
                 }
-                BlurHandler.INSTANCE.loadEffect();
+                //BlurHandler.INSTANCE.loadEffect();
             }
         });
 
-        CoreShaderRegistrationCallback.EVENT.register(context -> {
+        /*CoreShaderRegistrationCallback.EVENT.register(context -> {
             try {
                 context.register(
                         ModernUIMod.location("rendertype_modern_tooltip"),
                         DefaultVertexFormat.POSITION,
-                        GuiRenderType::setShaderTooltip);
+                        TooltipRenderType::setShaderTooltip);
             } catch (IOException e) {
                 LOGGER.error(MARKER, "Bad tooltip shader", e);
             }
-            try {
-                context.register(
-                        ModernUIMod.location("rendertype_round_rect"),
-                        DefaultVertexFormat.POSITION_COLOR,
-                        GuiRenderType::setShaderRoundRect);
-            } catch (IOException e) {
-                LOGGER.error(MARKER, "Bad round rect shader", e);
-            }
-        });
+        });*/
 
-        NeoForgeModConfigEvents.loading(ID).register(Config::reloadAnyClient);
-        NeoForgeModConfigEvents.reloading(ID).register(Config::reloadAnyClient);
+        NeoForgeModConfigEvents.loading(ID).register(ConfigImpl::reloadAnyClient);
+        NeoForgeModConfigEvents.reloading(ID).register(ConfigImpl::reloadAnyClient);
 
         ClientLifecycleEvents.CLIENT_STARTED.register((mc) -> {
             UIManagerFabric.initializeRenderer();
             // ensure it's applied and positioned
             Config.CLIENT.mLastWindowMode.apply();
 
-            if (Config.CLIENT.mUseNewGuiScale.get()) {
+            if (ConfigImpl.CLIENT.mUseNewGuiScale.get()) {
                 final OptionInstance<Integer> newGuiScale = new OptionInstance<>(
                         /*caption*/ "options.guiScale",
                         /*tooltip*/ OptionInstance.noTooltip(),
@@ -173,7 +161,7 @@ public class ModernUIFabricClient extends ModernUIClient implements ClientModIni
                         /*initialValue*/ 0,
                         /*onValueUpdate*/ value -> {
                     // execute in next tick, prevent transient GUI scale change
-                    Minecraft.getInstance().tell(() -> {
+                    Minecraft.getInstance().schedule(() -> {
                         Minecraft minecraft = Minecraft.getInstance();
                         if ((int) minecraft.getWindow().getGuiScale() !=
                                 minecraft.getWindow().calculateScale(value, false)) {
@@ -191,14 +179,10 @@ public class ModernUIFabricClient extends ModernUIClient implements ClientModIni
             }
         });
 
-        Config.initClientConfig(
-                spec -> NeoForgeConfigRegistry.INSTANCE.register(ID, ModConfig.Type.CLIENT, spec,
-                        ModernUI.NAME_CPT + "/client.toml")
-        );
-        Config.initTextConfig(
-                spec -> NeoForgeConfigRegistry.INSTANCE.register(ID, ModConfig.Type.CLIENT, spec,
-                        ModernUI.NAME_CPT + "/text.toml")
-        );
+        NeoForgeConfigRegistry.INSTANCE.register(ID, ModConfig.Type.CLIENT, ConfigImpl.CLIENT_SPEC,
+                ModernUI.NAME_CPT + "/client.toml");
+        NeoForgeConfigRegistry.INSTANCE.register(ID, ModConfig.Type.CLIENT, ConfigImpl.TEXT_SPEC,
+                ModernUI.NAME_CPT + "/text.toml");
 
         FontResourceManager.getInstance();
         if (ModernUIMod.isTextEngineEnabled()) {
@@ -225,15 +209,11 @@ public class ModernUIFabricClient extends ModernUIClient implements ClientModIni
                 @Override
                 public CompletableFuture<Void> reload(@Nonnull PreparationBarrier preparationBarrier,
                                                       @Nonnull ResourceManager resourceManager,
-                                                      @Nonnull ProfilerFiller preparationProfiler,
-                                                      @Nonnull ProfilerFiller reloadProfiler,
                                                       @Nonnull Executor preparationExecutor,
                                                       @Nonnull Executor reloadExecutor) {
                     return FontResourceManager.getInstance().reload(
                             preparationBarrier,
                             resourceManager,
-                            preparationProfiler,
-                            reloadProfiler,
                             preparationExecutor,
                             reloadExecutor
                     );

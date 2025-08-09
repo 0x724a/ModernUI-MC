@@ -1,6 +1,6 @@
 /*
  * Modern UI.
- * Copyright (C) 2019-2024 BloCamLimb. All rights reserved.
+ * Copyright (C) 2019-2025 BloCamLimb. All rights reserved.
  *
  * Modern UI is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -38,7 +39,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import static icyllis.modernui.ModernUI.LOGGER;
+import static icyllis.modernui.mc.ModernUIMod.LOGGER;
 
 /**
  * Load extra font resources for Modern UI.
@@ -89,7 +90,7 @@ public class FontResourceManager implements PreparableReloadListener {
                         sInstance = new TextLayoutEngine();
                     } else {
                         sInstance = new FontResourceManager();
-                        LOGGER.info(ModernUI.MARKER, "Created FontResourceManager");
+                        LOGGER.info(ModernUIMod.MARKER, "Created FontResourceManager");
                     }
                 }
             }
@@ -108,11 +109,8 @@ public class FontResourceManager implements PreparableReloadListener {
     @Override
     public CompletableFuture<Void> reload(@Nonnull PreparationBarrier preparationBarrier,
                                           @Nonnull ResourceManager resourceManager,
-                                          @Nonnull ProfilerFiller preparationProfiler,
-                                          @Nonnull ProfilerFiller reloadProfiler,
                                           @Nonnull Executor preparationExecutor,
                                           @Nonnull Executor reloadExecutor) {
-        preparationProfiler.startTick();
         CompletableFuture<LoadResults> preparation;
         {
             final var results = new LoadResults();
@@ -136,15 +134,13 @@ public class FontResourceManager implements PreparableReloadListener {
             preparation = CompletableFuture.allOf(loadFonts, loadEmojis, loadShortcodes)
                     .thenApply(__ -> results);
         }
-        preparationProfiler.endTick();
         return preparation
                 .thenCompose(preparationBarrier::wait)
                 .thenAcceptAsync(results -> {
-                    reloadProfiler.startTick();
+                    ProfilerFiller reloadProfiler = Profiler.get();
                     reloadProfiler.push("reload");
                     applyResources(results);
                     reloadProfiler.pop();
-                    reloadProfiler.endTick();
                 }, reloadExecutor);
     }
 
@@ -203,8 +199,7 @@ public class FontResourceManager implements PreparableReloadListener {
                         continue CYCLE;
                     }
                     boolean ec = Emoji.isEmoji(c);
-                    boolean ecc = isEmoji_Unicode16_workaround(c);
-                    if (i == 0 && !ec && !ecc) {
+                    if (i == 0 && !ec) {
                         continue CYCLE;
                     }
                     cps[n++] = c;
@@ -238,15 +233,6 @@ public class FontResourceManager implements PreparableReloadListener {
         } else {
             LOGGER.info(GlyphManager.MARKER, "No Emoji font was found");
         }
-    }
-
-    //FIXME Minecraft 1.21.1 still uses ICU-73.2, but Unicode 16 CLDR was added in ICU-76
-    // remove once Minecraft's ICU updated
-    static boolean isEmoji_Unicode16_workaround(int codePoint) {
-        return codePoint == 0x1FAE9 || codePoint == 0x1FAC6 ||
-                codePoint == 0x1FABE || codePoint == 0x1FADC ||
-                codePoint == 0x1FA89 || codePoint == 0x1FA8F ||
-                codePoint == 0x1FADF;
     }
 
     /**

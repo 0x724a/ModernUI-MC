@@ -42,6 +42,7 @@ import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.*;
+import net.minecraft.util.profiling.Profiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
@@ -59,7 +60,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-import static icyllis.modernui.ModernUI.LOGGER;
+import static icyllis.modernui.mc.ModernUIMod.LOGGER;
 
 /**
  * Modern UI text engine for Minecraft. This class performs Unicode text layout (and measurement),
@@ -340,7 +341,7 @@ public class TextLayoutEngine extends FontResourceManager
             throw new UnsupportedOperationException("Modern Text Engine");
         });
 
-        LOGGER.info(ModernUI.MARKER, "Created TextLayoutEngine");
+        LOGGER.info(ModernUIMod.MARKER, "Created TextLayoutEngine");
     }
 
     /**
@@ -611,20 +612,15 @@ public class TextLayoutEngine extends FontResourceManager
     @Override
     public CompletableFuture<Void> reload(@Nonnull PreparationBarrier preparationBarrier,
                                           @Nonnull ResourceManager resourceManager,
-                                          @Nonnull ProfilerFiller preparationProfiler,
-                                          @Nonnull ProfilerFiller reloadProfiler,
                                           @Nonnull Executor preparationExecutor,
                                           @Nonnull Executor reloadExecutor) {
-        preparationProfiler.startTick();
-        preparationProfiler.endTick();
         return prepareResources(resourceManager, preparationExecutor)
                 .thenCompose(preparationBarrier::wait)
                 .thenAcceptAsync(results -> {
-                    reloadProfiler.startTick();
+                    ProfilerFiller reloadProfiler = Profiler.get();
                     reloadProfiler.push("reload");
                     applyResources(results);
                     reloadProfiler.pop();
-                    reloadProfiler.endTick();
                 }, reloadExecutor);
     }
 

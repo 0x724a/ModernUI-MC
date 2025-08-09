@@ -18,9 +18,17 @@
 
 package icyllis.modernui.mc.ui;
 
-import icyllis.modernui.graphics.drawable.*;
+import icyllis.modernui.R;
+import icyllis.modernui.graphics.drawable.Drawable;
+import icyllis.modernui.graphics.drawable.ShapeDrawable;
+import icyllis.modernui.graphics.drawable.StateListDrawable;
+import icyllis.modernui.graphics.text.CharSequenceBuilder;
+import icyllis.modernui.resources.TypedValue;
 import icyllis.modernui.util.StateSet;
 import icyllis.modernui.view.View;
+import icyllis.modernui.view.ViewGroup;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.StringDecomposer;
 
 import javax.annotation.Nonnull;
 
@@ -59,10 +67,43 @@ public class ThemeControl {
     }
 
     public static Drawable makeDivider(@Nonnull View view) {
+        return makeDivider(view, false);
+    }
+
+    public static Drawable makeDivider(@Nonnull View view, boolean vertical) {
         ShapeDrawable drawable = new ShapeDrawable();
-        drawable.setShape(ShapeDrawable.HLINE);
-        drawable.setColor(THEME_COLOR);
-        drawable.setSize(-1, view.dp(2));
+        drawable.setShape(vertical ? ShapeDrawable.VLINE : ShapeDrawable.HLINE);
+        TypedValue value = new TypedValue();
+        view.getContext().getTheme().resolveAttribute(R.ns, R.attr.colorOutlineVariant, value, true);
+        drawable.setColor(value.data);
+        drawable.setSize(view.dp(1), view.dp(1));
         return drawable;
+    }
+
+    @Nonnull
+    public static String stripFormattingCodes(@Nonnull String str) {
+        if (str.indexOf(167) >= 0) {
+            var csb = new CharSequenceBuilder();
+            boolean res = StringDecomposer.iterateFormatted(str, Style.EMPTY, (index, style, codePoint) -> {
+                csb.addCodePoint(codePoint);
+                return true;
+            });
+            assert res;
+            return csb.toString();
+        }
+        return str;
+    }
+
+    public static void setViewAndChildrenEnabled(View view, boolean enabled) {
+        if (view != null) {
+            view.setEnabled(enabled);
+        }
+        if (view instanceof ViewGroup vg) {
+            int cc = vg.getChildCount();
+            for (int i = 0; i < cc; i++) {
+                View v = vg.getChildAt(i);
+                setViewAndChildrenEnabled(v, enabled);
+            }
+        }
     }
 }

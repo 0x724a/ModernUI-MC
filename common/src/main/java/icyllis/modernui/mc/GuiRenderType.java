@@ -30,13 +30,20 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public class GuiRenderType extends RenderType {
 
-    private static ShaderInstance sShaderTooltip;
-    private static ShaderInstance sShaderRoundRect;
+    public static final ShaderProgram SHADER_TOOLTIP = new ShaderProgram(
+            ModernUIMod.location("core/rendertype_modern_tooltip"),
+            DefaultVertexFormat.POSITION,
+            ShaderDefines.EMPTY);
+    public static final ShaderProgram SHADER_ROUND_RECT = new ShaderProgram(
+            ModernUIMod.location("core/rendertype_round_rect"),
+            DefaultVertexFormat.POSITION_COLOR,
+            ShaderDefines.EMPTY
+    );
 
     static final ShaderStateShard
-            RENDERTYPE_TOOLTIP = new ShaderStateShard(GuiRenderType::getShaderTooltip);
+            RENDERTYPE_TOOLTIP = new ShaderStateShard(SHADER_TOOLTIP);
     static final ShaderStateShard
-            RENDERTYPE_ROUND_RECT = new ShaderStateShard(GuiRenderType::getShaderRoundRect);
+            RENDERTYPE_ROUND_RECT = new ShaderStateShard(SHADER_ROUND_RECT);
 
     static final ImmutableList<RenderStateShard> TOOLTIP_STATES = ImmutableList.of(
             RENDERTYPE_TOOLTIP,
@@ -90,21 +97,5 @@ public class GuiRenderType extends RenderType {
 
     public static RenderType roundRect() {
         return ROUND_RECT;
-    }
-
-    public static ShaderInstance getShaderTooltip() {
-        return sShaderTooltip;
-    }
-
-    public static void setShaderTooltip(ShaderInstance shaderTooltip) {
-        sShaderTooltip = shaderTooltip;
-    }
-
-    public static ShaderInstance getShaderRoundRect() {
-        return sShaderRoundRect;
-    }
-
-    public static void setShaderRoundRect(ShaderInstance shaderRoundRect) {
-        sShaderRoundRect = shaderRoundRect;
     }
 }

@@ -18,14 +18,12 @@
 
 package icyllis.modernui.mc.mixin;
 
-import com.mojang.blaze3d.platform.Window;
 import icyllis.modernui.mc.*;
-import icyllis.modernui.mc.BlurHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import org.lwjgl.glfw.GLFW;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -39,12 +37,12 @@ public abstract class MixinMinecraft {
     @Nullable
     public Screen screen;
 
-    @Shadow
+    /*@Shadow
     @Final
     private Window window;
 
     @Shadow
-    public abstract boolean isWindowActive();
+    public abstract boolean isWindowActive();*/
 
     /**
      * Forge breaks the event, see
@@ -73,7 +71,7 @@ public abstract class MixinMinecraft {
         }
     }
 
-    @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
+    /*@Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
     private void onGetFramerateLimit(CallbackInfoReturnable<Integer> info) {
         if ((BlurHandler.sFramerateInactive != 0 ||
                 BlurHandler.sFramerateMinimized != 0) &&
@@ -92,7 +90,7 @@ public abstract class MixinMinecraft {
                 ));
             }
         }
-    }
+    }*/
 
     @Inject(method = "close", at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;shutdownExecutors()V"))
     private void onClose(CallbackInfo ci) {
